@@ -1,3 +1,37 @@
+/// {@category Interfaces}
+///
+/// This file contains the [Spotify] and [SimplifiedSResult] classes. These
+/// simply interacting with Spotify.
+///
+/// ## The `Spotify` class
+///
+/// ```dart
+/// print('Searching Spotify for "Hiroyuki Sawano - blumenkrantz"...');
+///
+/// var songs = await Spotify.search(query: 'Hiroyuki Sawano - blumenkrantz');
+///
+/// for (var song in songs) {
+///     print(song); // eg. SimplifiedSResult: Blumenkranz by Hiroyuki Sawano from キルラキル コンプリートサウンドトラック (258786 ms, https://open.spotify.com/track/1KvWQVn90Zfa1KdSuZXYxV)
+/// }
+///
+/// print('Getting Tracks from Album "Moe Moe" by Moe Shop...');
+///
+/// var albumSongs = await Spotify.getAlbumTracks(albumId: '4cQMG9J5WiIDMYaWf5axzy');
+///
+/// for (var song in albumSongs) {
+///     print(song); // eg. SimplifiedSResult: Magic by Moe Shop, MYLK from Moe Moe (209228 ms, https://open.spotify.com/track/4vDiYZOAGrt2eS3IYtkcgv)
+/// }
+///
+/// print('Getting Tracks from Playlist "Old likes" by shady-ti...');
+///
+/// var playlistSongs = await Spotify.getPlaylistTracks(playlistId: '0N26lkxX6XxG5o5Wk1R7MH');
+///
+/// for (var song in playlistSongs) {
+///     print(song); // eg. SimplifiedSResult: Revolving Door by Kisnou, Amethyst from All to Redeem (II) (210285 ms, https://open.spotify.com/track/25rwKmOxEqmbDH4PjlIZTS)
+/// }
+/// ```
+
+// Package imports:
 import 'package:spotify/spotify.dart';
 
 /// Class simplifying interacting with Spotify.
@@ -10,19 +44,42 @@ class Spotify {
     ),
   );
 
-  /// Searches Spotify for the specified [query] and returns a list of [SimplifiedSResults]s.
-  static Future<List<SimplifiedSResults>> Search(String query) async {
-    var results = await intface.search.get(query, types: [SearchType.track]).first(5);
+  /// Searches Spotify for the specified [query].
+  static Future<List<SimplifiedSResult>> search({
+    required String query,
+    int numberOfResults = 10,
+  }) async {
+    var results = await intface.search.get(query, types: [SearchType.track]).first(numberOfResults);
 
-    var tracks = <SimplifiedSResults>[];
+    var tracks = <SimplifiedSResult>[];
 
-    results.forEach((page) {
+    for (var page in results) {
       page.items?.forEach((track) {
-        tracks.add(SimplifiedSResults(track));
+        tracks.add(SimplifiedSResult(track: track));
       });
-    });
+    }
 
     return tracks;
+  }
+
+  /// Get all tracks from a playlist.
+  static Future<List<SimplifiedSResult>> getPlaylistTracks({required String playlistId}) async {
+    var playlistTracks = await intface.playlists.getTracksByPlaylistId(playlistId).all();
+
+    return playlistTracks.map((track) => SimplifiedSResult(track: track)).toList();
+  }
+
+  /// Get all tracks from an album.
+  static Future<List<SimplifiedSResult>> getAlbumTracks({required String albumId}) async {
+    // get all tracks from the album
+    var simpleAlbumTracks = await intface.albums.getTracks(albumId).all();
+
+    // use the tracks endpoint as the album endpoint returns partial track data
+    var albumTracks = await intface.tracks.list(
+      simpleAlbumTracks.map((simpleTrack) => simpleTrack.id!),
+    );
+
+    return albumTracks.map((track) => SimplifiedSResult(track: track)).toList();
   }
 }
 
@@ -35,7 +92,7 @@ class Spotify {
 /// - album
 /// - url
 ///
-class SimplifiedSResults {
+class SimplifiedSResult {
   /// The full-fledged [Track] object.
   final Track track;
 
@@ -57,8 +114,8 @@ class SimplifiedSResults {
   /// URL of the track.
   String get url => 'https://open.spotify.com/track/${track.id}';
 
-  /// Creates a new [SimplifiedSResults] from a [Track].
-  SimplifiedSResults(this.track);
+  /// Creates a new [SimplifiedSResult] from a [Track].
+  SimplifiedSResult({required this.track});
 
   @override
   String toString() {

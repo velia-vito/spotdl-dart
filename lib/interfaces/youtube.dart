@@ -1,5 +1,24 @@
+/// {@category Interfaces}
+///
+/// This file contains the [YouTube] and [SimplifiedYTEResult] classes. These
+/// simply interacting with YouTube.
+///
+/// ## The `YouTube` class
+///
+/// ```dart
+/// print('Searching YouTube for "Hiroyuki Sawano - blumenkrantz"...');
+///
+/// var songs = await YouTube.search(query: 'Hiroyuki Sawano - blumenkrantz');
+///
+/// for (var song in songs) {
+///     print(song); // eg. SimplifiedYTEResult: Blumenkranz by Various Artists - Topic (259000 ms) @ https://www.youtube.com/watch?v=zRI5uW6DLXg
+/// }
+/// ```
+
+// Dart imports:
 import 'dart:io';
 
+// Package imports:
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 /// Class simplifying interacting with YouTube Explode.
@@ -7,11 +26,11 @@ class YouTube {
   /// The [YoutubeExplode] instance used for interacting with YouTube.
   static final intface = YoutubeExplode();
 
-  /// Searches YouTube for the specified [query] and returns a list of [SimplifiedYTEResult]s.
-  static Future<List<SimplifiedYTEResult>> search(String query) async {
+  /// Searches YouTube for the specified [query].
+  static Future<List<SimplifiedYTEResult>> search({required String query}) async {
     var results = await intface.search.search(query);
 
-    return results.map((elm) => SimplifiedYTEResult(elm)).toList();
+    return results.map((searchResult) => SimplifiedYTEResult(video: searchResult)).toList();
   }
 }
 
@@ -44,7 +63,7 @@ class SimplifiedYTEResult {
   String get url => video.url.toString();
 
   /// Creates a new [SimplifiedYTEResult] from a [Video].
-  SimplifiedYTEResult(this.video);
+  SimplifiedYTEResult({required this.video});
 
   /// Downloads the audio to the specified [path].
   void downloadTo({required String path}) async {
