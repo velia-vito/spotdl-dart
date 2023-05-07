@@ -3,7 +3,7 @@
 /// This file contains the [Spotify] and [SimplifiedSResult] classes. These
 /// simply interacting with Spotify.
 ///
-/// ## The `Spotify` class
+/// ## Usage
 ///
 /// ```dart
 /// print('Searching Spotify for "Hiroyuki Sawano - blumenkrantz"...');
@@ -119,6 +119,12 @@ class SimplifiedSResult {
 
   @override
   String toString() {
-    return 'SimplifiedSResult: $title by ${artists.join(', ')} from $album ($durationMs ms, $url)';
+    return 'SimplifiedSResult: $title by ${artists.join(', ')} from "$album" ($durationMs ms, $url)';
   }
+
+  /// Return the string that is used for matching.
+  String getMatchString() => '${artists.join(' ')} $title';
+
+  /// Return the string that is used for the YouTube search query.
+  String getSearchString() => '$title by ${artists.join(', ')} from "$album"';
 }

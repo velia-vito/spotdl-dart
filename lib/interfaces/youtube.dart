@@ -3,7 +3,7 @@
 /// This file contains the [YouTube] and [SimplifiedYTEResult] classes. These
 /// simply interacting with YouTube.
 ///
-/// ## The `YouTube` class
+/// ## Usage
 ///
 /// ```dart
 /// print('Searching YouTube for "Hiroyuki Sawano - blumenkrantz"...');
@@ -54,10 +54,10 @@ class SimplifiedYTEResult {
   String get author => video.author;
 
   /// Duration of the video.
-  Duration? get duration => video.duration;
+  Duration get duration => video.duration!;
 
   /// Duration of the video in milliseconds.
-  int? get durationMs => video.duration?.inMilliseconds;
+  int get durationMs => video.duration!.inMilliseconds;
 
   /// URL of the video.
   String get url => video.url.toString();
@@ -66,7 +66,7 @@ class SimplifiedYTEResult {
   SimplifiedYTEResult({required this.video});
 
   /// Downloads the audio to the specified [path].
-  void downloadTo({required String path}) async {
+  Future<void> downloadTo({required String path}) async {
     var yte = YoutubeExplode();
 
     // get the manifest and stream info
@@ -92,6 +92,9 @@ class SimplifiedYTEResult {
 
   @override
   String toString() {
-    return 'SimplifiedYTEResult: $title by $author ($durationMs ms) @ $url';
+    return 'SimplifiedYTEResult: $title by $author ($durationMs ms, $url)';
   }
+
+  /// Returns the string that is be used for matching.
+  String getMatchString() => '$author - $title';
 }
