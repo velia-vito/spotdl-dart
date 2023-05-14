@@ -27,11 +27,11 @@ class Tag {
   void generateHeader() {
     // 1. ID3v2/file identifier
     //    "ID3"
-    _buffer.addANSIFrameHeader('ID3');
+    _buffer.addText('ID3');
 
     // 2. ID3v2 version
-    //    $03 00           (version 3.0)
-    _buffer.addBytes([0x03, 0x00]);
+    //    $03 00           (version 3.2)
+    _buffer.addBytes([0x03, 0x02]);
 
     // 3. ID3v2 flags
     //    %abc00000       (we set abc to 000 to keep it simple)

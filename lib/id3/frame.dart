@@ -14,15 +14,18 @@ class Frame {
   Frame.textFrame(String id, String text) {
     // 1. Header
     //    $xx xx xx xx xx xx xx xx xx xx
-    generateFrameHeader(id, text.codeUnits.length);
+    generateFrameHeader(id, text.codeUnits.length + 3);
 
     // 2. Text encoding
     //    $xx                                   (0x08 for Unicode)
-    _buffer.addBytes([0x03]);
+    _buffer.addBytes([0x01]);
 
     // 3. Information
     //    <text string according to encoding>
-    _buffer.addUTF8FrameText(text);
+    _buffer.addText(text);
+
+    //4. Termination bytes
+    _buffer.addBytes([0x00, 0x00]);
   }
 
   /// generate frame header
@@ -33,7 +36,7 @@ class Frame {
       throw Exception('Frame ID must be 4 characters long');
     }
 
-    _buffer.addANSIFrameHeader(id);
+    _buffer.addIdentifier(id);
 
     // 2. Size
     //    $xx xx xx xx          (4 bytes, leading bit is zero inserted)

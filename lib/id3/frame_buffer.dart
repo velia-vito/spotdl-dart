@@ -10,22 +10,17 @@ class FrameBuffer {
 
   FrameBuffer();
 
-  /// add the given text as ISO-8859-1 encoded bytes
-  void addANSIFrameHeader(String text) {
+  void addIdentifier(String text) {
     _buffer.add(latin1.encode(text));
+  }
+
+  /// add the given test as ISO-8859-1 encoded bytes
+  void addText(String text) {
+    _buffer.add(FrameBufferUtils.toUTF16BE(text));
   }
 
   void clear() {
     _buffer.clear();
-  }
-
-  /// add the given text as UTF-16LE encoded bytes
-  void addUTF8FrameText(String text) {
-    // !dart internally uses UTF-16LE for strings
-    _buffer.add(utf8.encode(text));
-
-    // unicode null byte as terminator
-    _buffer.add([0x00]);
   }
 
   /// add given bytes to the buffer
@@ -74,17 +69,16 @@ class FrameBufferUtils {
 
   /// convert a string to UTF-16BE encoded bytes
   static List<int> toUTF16BE(String input) {
-    List<int> bytes = utf8.encode(input); // Encode the input string as UTF-8 bytes
-
     List<int> encoded = [];
-    encoded.addAll([0xFE, 0xFF]); // BOM bytes in big-endian format
 
-    for (int i = 0; i < bytes.length; i += 2) {
-      if (i + 1 < bytes.length) {
-        encoded.addAll([bytes[i + 1], bytes[i]]); // Swap the byte order (big-endian)
-      } else {
-        encoded.addAll([0, bytes[i]]); // Pad with zero byte if the length is odd
-      }
+    // Add BOM bytes: 0xFE, 0xFF (big-endian BOM)
+    encoded.add(0xFE);
+    encoded.add(0xFF);
+
+    // Encode each character as UTF-16 (big-endian)
+    for (int charCode in input.runes) {
+      encoded.add((charCode >> 8) & 0xFF);
+      encoded.add(charCode & 0xFF);
     }
 
     return encoded;
@@ -95,20 +89,13 @@ class FrameBufferUtils {
   /// ### Note
   /// - format: `0x00 0x00 0x00 0x00`
   static List<int> getEncodedSize(int size) {
-    // insert zero after every 7 characters from the right
-    var bitStringReversed = FrameBufferUtils.toBinary(size).split('').reversed;
-    var bitStringFinal = '';
+    List<int> bytes = [];
 
-    for (var bit in bitStringReversed) {
-      bitStringFinal += bit;
+    bytes.add((size >> 21) & 0x7F); //0x7F is 01111111 (zeroing the last bit)
+    bytes.add((size >> 14) & 0x7F);
+    bytes.add((size >> 7) & 0x7F);
+    bytes.add(size & 0x7F);
 
-      if (bitStringFinal.length % 8 == 7) {
-        bitStringFinal += '0';
-      }
-    }
-
-    var encodedSize = FrameBufferUtils.fromBinary(bitStringFinal.split('').reversed.join(''));
-
-    return FrameBufferUtils.toByteSet(encodedSize);
+    return bytes;
   }
 }
