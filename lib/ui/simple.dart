@@ -1,4 +1,6 @@
 // Flutter imports:
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 // Package imports:
@@ -56,6 +58,10 @@ class SimpleState extends State<Simple> {
         applicationVersion: '0.0.0-pre+15.may.23',
         applicationIcon: const Icon(Icons.library_music),
         applicationLegalese: '© 2023 shady-ti',
+        children: [
+          Text(
+              'Songs are stored at ${Platform.isAndroid ? '/storage/emulated/0/spotdl' : (await getDownloadsDirectory())!.absolute.path}')
+        ],
       );
     }
   }
@@ -88,7 +94,11 @@ class SimpleState extends State<Simple> {
     if (mounted) setState(() {});
 
     // if there are songs in toDownload, download them
-    var downloadDir = (await getDownloadsDirectory())!.absolute.path;
+    var downloadDir = '';
+
+    downloadDir = Platform.isAndroid
+        ? '/storage/emulated/0/spotdl'
+        : (await getDownloadsDirectory())!.absolute.path;
 
     while (toDownload.isNotEmpty) {
       var song = toDownload.first;
