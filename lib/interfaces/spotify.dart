@@ -114,6 +114,12 @@ class SimplifiedSResult {
   /// URL of the track.
   String get url => 'https://open.spotify.com/track/${track.id}';
 
+  /// Album art URL
+  String get albumArtUrl => track.album!.images!.first.url!;
+
+  @override
+  int get hashCode => toString().hashCode;
+
   /// Creates a new [SimplifiedSResult] from a [Track].
   SimplifiedSResult({required this.track});
 
@@ -122,9 +128,29 @@ class SimplifiedSResult {
     return 'SimplifiedSResult: $title by ${artists.join(', ')} from "$album" ($durationMs ms, $url)';
   }
 
+  @override
+  bool operator ==(Object other) {
+    return hashCode == other.hashCode;
+  }
+
   /// Return the string that is used for matching.
   String getMatchString() => '${artists.join(' ')} $title';
 
   /// Return the string that is used for the YouTube search query.
   String getSearchString() => '$title by ${artists.join(', ')} from "$album"';
+
+  /// get filesystem safe file names
+  ///
+  /// ### Note
+  /// - format used is: artist1, artist2, ... — title
+  String getFileName() => '${artists.join(', ')} — $title'
+      .replaceAll(r'/', '')
+      .replaceAll(r'\', '')
+      .replaceAll(r':', '')
+      .replaceAll(r'*', '')
+      .replaceAll(r'?', '')
+      .replaceAll(r'"', '')
+      .replaceAll(r'<', '')
+      .replaceAll(r'>', '')
+      .replaceAll(r'|', '');
 }
