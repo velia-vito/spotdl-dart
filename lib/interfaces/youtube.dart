@@ -75,7 +75,9 @@ class SimplifiedYTEResult {
     var stream = yte.videos.streamsClient.get(streamInfo);
 
     // download the video
-    var fileStream = File(path).openWrite();
+    var file = File(path);
+    file.createSync(recursive: true);
+    var fileStream = file.openWrite();
 
     // !waiting for finish
     // ignore: avoid-ignoring-return-values
