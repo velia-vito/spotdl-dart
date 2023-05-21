@@ -1,9 +1,9 @@
+// Project imports:
+import 'package:spotify_dart/id3/frame.dart';
 import 'package:spotify_dart/id3/frame_buffer.dart';
 
-import 'frame.dart';
-
 class Tag {
-  var _buffer = FrameBuffer();
+  final _buffer = FrameBuffer();
 
   // TODO: boilerplate and make this hidden
   var frames = <Frame>[];

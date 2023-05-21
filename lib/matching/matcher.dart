@@ -21,12 +21,12 @@ import 'package:spotify_dart/interfaces/youtube.dart';
 
 /// The [Matcher] class contains methods to to narrow down a multitude of YouTube
 /// results in the form of [SimplifiedYTEResult]s to the single best match to
-/// the given Spotify metadata in the form of a [SimplifiedSResult].
+/// the given Spotify metadata in the form of a [SimplifiedSongResult].
 class Matcher {
   /// Reduce a list of [SimplifiedYTEResult]s to a single `SimplifiedYTEResult`
-  /// that best matches the provided [SimplifiedSResult].
+  /// that best matches the provided [SimplifiedSongResult].
   static Future<SimplifiedYTEResult?> findBestResult({
-    required SimplifiedSResult sResult,
+    required SimplifiedSongResult sResult,
     required List<SimplifiedYTEResult> yResults,
   }) async {
     if (yResults.isEmpty) return null;
@@ -84,10 +84,10 @@ class Matcher {
     return bMatchScore > 1 ? bResult : null;
   }
 
-  /// Calculate a match score between two a [SimplifiedSResult] and a
+  /// Calculate a match score between two a [SimplifiedSongResult] and a
   /// [SimplifiedYTEResult].
   static Future<int> matchScore({
-    required SimplifiedSResult sResult,
+    required SimplifiedSongResult sResult,
     required SimplifiedYTEResult yResult,
   }) async {
     var score = 0;
