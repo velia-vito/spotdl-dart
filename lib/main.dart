@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
-import 'package:spotify_dart/ui/simple.dart';
+import 'package:spotify_dart/ui/ui.dart';
 
 void main(List<String> args) {
   runApp(
     MaterialApp(
-      home: Simple(),
+      home: const UI(),
       theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color.fromRGBO(115, 171, 132, 1),
-      ),
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          colorSchemeSeed: const Color.fromRGBO(115, 171, 132, 1)),
     ),
   );
 }

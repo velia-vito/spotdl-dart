@@ -1,7 +1,8 @@
-import 'frame_buffer.dart';
+// Project imports:
+import 'package:spotify_dart/id3/frame_buffer.dart';
 
 class Frame {
-  var _buffer = FrameBuffer();
+  final _buffer = FrameBuffer();
 
   int get length => _buffer.length;
 
