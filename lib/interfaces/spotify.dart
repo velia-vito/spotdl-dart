@@ -148,7 +148,6 @@ class SimplifiedSResult {
   String get artUrl => throw UnimplementedError();
   String get url => throw UnimplementedError();
   String get id => throw UnimplementedError();
-  String get artist => throw UnimplementedError();
   SResultTypes get type => throw UnimplementedError();
 
   List<String> get artists => throw UnimplementedError();
@@ -275,7 +274,7 @@ class SimplifiedPlaylistResult extends SimplifiedSResult {
 
   @override
   String toString() {
-    return '$title (playlist) by $artist ($url)';
+    return '$title (playlist) by $artists ($url)';
   }
 }
 
