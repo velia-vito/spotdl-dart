@@ -1,356 +1,80 @@
-import 'dart:convert';
+/// {@category Interfaces}
+///
+/// Simplifying the writing of ID3 (v2.3) tags.
+///
+/// ## Usage
+///
+/// Prefer using [ID3Interface.writeMetadata] over setting individual tags one
+/// at a time as its simply faster.
+///
+/// ```dart
+/// // Dart imports:
+/// import 'dart:io';
+///
+/// // Project imports:
+/// import 'package:spotify_dart/interfaces/id3.dart';
+/// import 'package:spotify_dart/interfaces/spotify.dart';
+/// import 'package:spotify_dart/interfaces/youtube.dart';
+///
+/// // NOTE: THIS IS NOT AN EXHAUSTIVE EXAMPLE.
+/// void main(List<String> args) async {
+///   // Find Song matches, download it.
+///   var sResult = await Spotify.getSong(songId: '69ySIzFcdu5MDs7CNNTLLk');
+///   var yResult = await YouTube.getBestMatch(song: sResult);
+///
+///   // Save the Audio and Album Art to file.
+///   var songPath = sResult.getSaveFileName();
+///   var albumArtPath = 'albumArt.jpg';
+///
+///   print('Downloading audio to $songPath . . .');
+///   await yResult!.downloadTo(path: songPath);
+///   print('\tDone');
+///
+///   print('Downloading album art to albumArt.jpg . . .');
+///   await sResult.downloadAlbumArtTo(path: albumArtPath);
+///   print('\tDone');
+///
+///   // Write Metadata.
+///   print('Obtaining Platform +specific ID3 implementation . . .');
+///   var id3 = ID3.getId3Impl();
+///   print('\tDone');
+///
+///   print('Applying metadata . . .');
+///   id3.loadFile(path: songPath);
+///   var _ = await id3.writeMetadata(
+///     title: sResult.title,
+///     songArtists: sResult.artists,
+///     albumTitle: sResult.albumTitle,
+///     albumArtists: sResult.albumArtists,
+///     trackNumber: sResult.trackNumber,
+///     albumArtFilePath: albumArtPath,
+///   );
+///   print('\tDone');
+///
+///   // Delete the temporary files.
+///   var __ = await File(albumArtPath).delete();
+/// }
+/// ```
+
+// Dart imports:
 import 'dart:io';
 
-import 'package:ffmpeg_cli/ffmpeg_cli.dart';
-
-/// The interface implemented by classes that aid in editing ID3 tags.
-abstract interface class ID3 {
-  /// Character sequence used to separate artists, genres, etc.
-  String get separator => throw UnimplementedError();
-
-  /// Path the the file currently being edited.
-  String get filePath => throw UnimplementedError();
-
-  /// Set path of the file currently being edited.
-  void loadFile({required String path}) => throw UnimplementedError();
-
-  /// Utility function to set all metadata at the same time
-  void setMetadata({
-    String? title,
-    String? comment,
-    List<String>? songArtists,
-    String? albumTitle,
-    List<String>? albumArtists,
-    int? trackNumber,
-    int? discNumber,
-    int? releaseYear,
-    String? albumArtPath,
-  }) =>
-      throw UnimplementedError();
-
-  /// Set title of the song.
-  void addTitle({required String title}) => throw UnimplementedError();
-
-  /// Add a comment to the song.
-  void addComment({required String comment}) => throw UnimplementedError();
-
-  /// Set the artists of the song.
-  void addSongArtists({required List<String> artists}) => throw UnimplementedError();
-
-  /// Set the title of the album to which this song belongs to.
-  void addAlbumTitle({required String album}) => throw UnimplementedError();
-
-  /// Set the album artists.
-  void addAlbumArtist({required List<String> artists}) => throw UnimplementedError();
-
-  /// Set the track number of the song in the album.
-  void addTrackNumber({required int trackNumber}) => throw UnimplementedError();
-
-  /// Set the disc number of the song (in case of a multi-disk album)
-  void addDiscNumber({required int discNumber}) => throw UnimplementedError();
-
-  /// Set the year of the song's parent-album release.
-  void addAlbumReleaseYear({required int year}) => throw UnimplementedError();
-
-  /// set the file at the given path as the song's album art
-  void addAlbumArt({required String albumArtPath}) => throw UnimplementedError();
-}
-
-// -i "Yaeji — Raingurl-preEnc.mp3" -i rgc.jpg
-// -map 0:a -codec copy -map 1:0
-// -id3v2_version 3
-// -metadata title="Raingurl"
-// -metadata artist="Yaeji"
-// -metadata album="Raingurl"
-// -metadata album_artist="Yaeji||Bleh"
-// -metadata date="2020"
-// -metadata track="12"
-// -metadata disk="2"
-//  -metadata COMM="this is a test comment"
-// -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)"
-// "Yaeji — Raingurl.mp3"
-/// ID3 editing for Windows, Linux, and MacOS via [Ffmpeg]
-class ID3Desktop implements ID3 {
-  static final ffmpeg = Ffmpeg();
-
-  late String _separator;
-
-  late String _filePath;
-
-  @override
-  String get separator => _separator;
-
-  @override
-  String get filePath => _filePath;
-
-  /// Create an instance of [ID3Desktop]
-  ID3Desktop({required String filePath, String separator = ', '}) : _filePath = filePath {
-    _separator = separator;
-  }
-  @override
-  Future<int> setMetadata({
-    String? title,
-    String? comment,
-    List<String>? songArtists,
-    String? albumTitle,
-    List<String>? albumArtists,
-    int? trackNumber,
-    int? discNumber,
-    int? releaseYear,
-    String? albumArtPath,
-  }) async {
-    await _rename();
-
-    var proc = Process.runSync(
-      'ffmpeg',
-      [
-        //inputs
-        '-i',
-        '$_filePath.tmp',
-        if (albumArtPath != null) '-i',
-        if (albumArtPath != null) albumArtPath,
-        if (albumArtPath != null) '-map',
-        if (albumArtPath != null) '0:a',
-        if (albumArtPath != null) '-map',
-        if (albumArtPath != null) '1:0',
-
-        // id3 version
-        '-id3v2_version',
-        '3',
-
-        // album art
-        if (albumArtPath != null) '-metadata:s:v',
-        if (albumArtPath != null) 'title="Album cover"',
-        if (albumArtPath != null) '-metadata:s:v',
-        if (albumArtPath != null) 'comment="Cover (front)"',
-
-        // other text frames
-        if (title != null) '-metadata',
-        if (title != null) 'title="$title"',
-
-        if (comment != null) '-metadata',
-        if (comment != null) 'COMM="$comment"',
-
-        if (songArtists != null) '-metadata',
-        if (songArtists != null) 'artist="${songArtists.join(separator)}"',
-
-        if (albumTitle != null) '-metadata',
-        if (albumTitle != null) 'album="$albumTitle"',
-
-        if (albumArtists != null) '-metadata',
-        if (albumArtists != null) 'album_artist="${albumArtists.join(separator)}"',
-
-        if (trackNumber != null) '-metadata',
-        if (trackNumber != null) 'track="$trackNumber"',
-
-        if (discNumber != null) '-metadata',
-        if (discNumber != null) 'disk="$discNumber"',
-
-        if (releaseYear != null) '-metadata',
-        if (releaseYear != null) 'date="$releaseYear"',
-
-        // output
-        _filePath,
-      ],
-    );
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addAlbumArt({required String albumArtPath}) async {
-    await _rename();
-
-    var proc = Process.runSync(
-      'ffmpeg',
-      [
-        '-i',
-        '$_filePath.tmp',
-        '-i',
-        albumArtPath,
-        '-map',
-        '0:a',
-        '-map',
-        '1:0',
-        '-id3v2_version',
-        '3',
-        '-metadata:s:v',
-        'title="Album cover"',
-        '-metadata:s:v',
-        'comment="Cover (front)"',
-        _filePath,
-      ],
-    );
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addAlbumArtist({required List<String> artists}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'album_artist="${artists.join(separator)}"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addAlbumReleaseYear({required int year}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'date="$year"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addAlbumTitle({required String album}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'album="$album"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addComment({required String comment}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'COMM="$comment"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addDiscNumber({required int discNumber}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'disk="$discNumber"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addSongArtists({required List<String> artists}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'artist="${artists.join(separator)}"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addTitle({required String title}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'title="$title"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  Future<int> addTrackNumber({required int trackNumber}) async {
-    await _rename();
-
-    var proc = await Process.run('ffmpeg', [
-      '-i',
-      '$_filePath.tmp',
-      '-id3v2_version',
-      '3',
-      '-metadata',
-      'track="$trackNumber"',
-      _filePath,
-    ]);
-
-    await _cleanUp();
-
-    return proc.exitCode;
-  }
-
-  @override
-  void loadFile({required String path}) {
-    _filePath = path;
-  }
-
-  Future<void> _rename() async {
-    var _ = await File(filePath).rename('$filePath.tmp');
-  }
-
-  Future<void> _cleanUp() async {
-    var _ = await File('$filePath.tmp').delete();
+part 'id3/id3_interface.dart';
+part 'id3/id3_desktop.dart';
+
+/// Class simplifying the writing of ID3 (v2.3) tags.
+///
+/// ### Note:
+/// - Supports only desktop platforms (as of right now).
+/// - Required ffmpeg to be installed and added to `PATH` on desktop platforms.
+class ID3 {
+  /// Get a platform specific implementation of [ID3Interface].
+  static ID3Interface getId3Impl() {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      return ID3Desktop();
+    } else {
+      // TODO: implement for other platforms.
+      throw UnsupportedError('ID3Interface not yet implemented for ${Platform.operatingSystem}');
+    }
   }
 }

@@ -1,25 +1,42 @@
 /// {@category Interfaces}
 ///
-/// This file contains the [YouTube] and [SimplifiedYTEResult] classes. These
-/// simply interacting with YouTube.
+/// Simplifies interacting with YouTube.
+///
+/// ## Note
+/// This library is designed with the express intention of finding song matches
+/// between Spotify and YouTube results, and that is the reason the matching
+/// algorithm/logic ([MatcherDefs]) is bound to this library instead of
+/// separately.
 ///
 /// ## Usage
 ///
+/// [YouTube.getBestMatch] should cover 99% of your use cases.
+///
 /// ```dart
-/// print('Searching YouTube for "Hiroyuki Sawano - blumenkrantz"...');
+/// import 'package:spotify_dart/interfaces/spotify.dart';
+/// import 'package:spotify_dart/interfaces/youtube.dart';
 ///
-/// var songs = await YouTube.search(query: 'Hiroyuki Sawano - blumenkrantz');
+/// // NOTE: NOT AN EXHAUSTIVE EXAMPLE
+/// void main(List<String> args) async {
+///   var sResult = await Spotify.getSong(songId: '69ySIzFcdu5MDs7CNNTLLk');
+///   var yResult = await YouTube.getBestMatch(song: sResult);
 ///
-/// for (var song in songs) {
-///     print(song); // eg. SimplifiedYTEResult: Blumenkranz by Various Artists - Topic (259000 ms) @ https://www.youtube.com/watch?v=zRI5uW6DLXg
+///   print('$sResult     <————(Matched With)————>     $yResult');
 /// }
 /// ```
 
 // Dart imports:
 import 'dart:io';
+import 'dart:math';
 
 // Package imports:
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+// Project imports:
+import 'package:spotify_dart/interfaces/spotify.dart';
+
+part 'youtube/y_result.dart';
+part 'youtube/matcher_defs.dart';
 
 /// Class simplifying interacting with YouTube Explode.
 class YouTube {
@@ -27,76 +44,26 @@ class YouTube {
   static final intface = YoutubeExplode();
 
   /// Searches YouTube for the specified [query].
-  static Future<List<SimplifiedYTEResult>> search({required String query}) async {
+  static Future<List<YResult>> search({required String query}) async {
     var results = await intface.search.search(query);
 
-    return results.map((searchResult) => SimplifiedYTEResult(video: searchResult)).toList();
-  }
-}
-
-/// Class simplifying locating YouTube Explode video details.
-///
-/// Details exposed are:
-/// - title
-/// - author
-/// - duration
-/// - url
-/// - download function
-///
-class SimplifiedYTEResult {
-  /// The full-fledged [Video] object.
-  final Video video;
-
-  /// Title of the video.
-  String get title => video.title;
-
-  /// Author/Uploader of the video.
-  String get author => video.author;
-
-  /// Duration of the video.
-  Duration get duration => video.duration!;
-
-  /// Duration of the video in milliseconds.
-  int get durationMs => video.duration!.inMilliseconds;
-
-  /// URL of the video.
-  String get url => video.url.toString();
-
-  /// Creates a new [SimplifiedYTEResult] from a [Video].
-  SimplifiedYTEResult({required this.video});
-
-  /// Downloads the audio to the specified [path].
-  Future<void> downloadTo({required String path}) async {
-    var yte = YoutubeExplode();
-
-    // get the manifest and stream info
-    var manifest = await yte.videos.streamsClient.getManifest(video.id);
-    var streamInfo = manifest.audioOnly.withHighestBitrate();
-    var stream = yte.videos.streamsClient.get(streamInfo);
-
-    // download the video
-    var file = File(path);
-    file.createSync(recursive: true);
-    var fileStream = file.openWrite();
-
-    // !waiting for finish
-    // ignore: avoid-ignoring-return-values
-    await stream.pipe(fileStream);
-
-    // !waiting for finish
-    // ignore: avoid-ignoring-return-values
-    await fileStream.flush();
-
-    // !waiting for finish
-    // ignore: avoid-ignoring-return-values
-    await fileStream.close();
+    return results.map((searchResult) => YResult(video: searchResult)).toList();
   }
 
-  @override
-  String toString() {
-    return 'SimplifiedYTEResult: $title by $author ($durationMs ms, $url)';
-  }
+  /// Finds the best match for the specified [SResultSong] on YouTube.
+  static Future<YResult?> getBestMatch({required SResultSong song}) async {
+    // Search with traditional search query.
+    var bestMatch = await MatcherDefs.findBestResultAmong(
+      sResult: song,
+      yResults: await YouTube.search(query: song.getYouTubeMatchingString()),
+    );
 
-  /// Returns the string that is be used for matching.
-  String getMatchString() => '$author - $title';
+    // If no good matches are found, use alternative search query.
+    bestMatch ??= await MatcherDefs.findBestResultAmong(
+      sResult: song,
+      yResults: await YouTube.search(query: song.getYouTubeMatchingString()),
+    );
+
+    return bestMatch;
+  }
 }

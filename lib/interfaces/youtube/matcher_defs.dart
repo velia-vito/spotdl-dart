@@ -1,42 +1,22 @@
-/// {@category Core}
-///
-/// This file contains the [Matcher] class that holds the requisite methods to
-/// find the best possible match for any given Spotify track on YouTube.
-///
-/// ## Usage
-///
-/// ```dart
-/// var sResult = await Spotify.search(query: 'Hiroyuki Sawano - blumenkrantz');
-/// var yResultSet = await YouTube.search(query: sResult.getSearchString());
-///
-/// print((await Matcher.findBestResult(sResult: sResult, yResults: yResultSet)));
-/// ```
+part of '../youtube.dart';
 
-// Dart imports:
-import 'dart:math';
-
-// Project imports:
-import 'package:spotify_dart/interfaces/spotify.dart';
-import 'package:spotify_dart/interfaces/youtube.dart';
-
-/// The [Matcher] class contains methods to to narrow down a multitude of YouTube
-/// results in the form of [SimplifiedYTEResult]s to the single best match to
-/// the given Spotify metadata in the form of a [SimplifiedSongResult].
-class Matcher {
-  /// Reduce a list of [SimplifiedYTEResult]s to a single `SimplifiedYTEResult`
-  /// that best matches the provided [SimplifiedSongResult].
-  static Future<SimplifiedYTEResult?> findBestResult({
-    required SimplifiedSongResult sResult,
-    required List<SimplifiedYTEResult> yResults,
+/// The underlying logic that is used to assign a match score to each [YResult].
+///
+/// Note:
+/// - Higher scores are better.
+class MatcherDefs {
+  /// Reduce a list of [YResult]s to a single `SimplifiedYTEResult`
+  /// that best matches the provided [SResultSong].
+  static Future<YResult?> findBestResultAmong({
+    required SResultSong sResult,
+    required List<YResult> yResults,
   }) async {
-    if (yResults.isEmpty) return null;
-
     var bResult = yResults.first;
-    var bMatchScore = await matchScore(sResult: sResult, yResult: bResult);
+    var bMatchScore = await calculateMatchScore(sResult: sResult, yResult: bResult);
 
     for (var yResult in yResults) {
       // update best result if current result is better
-      var yMatchScore = await matchScore(sResult: sResult, yResult: yResult);
+      var yMatchScore = await calculateMatchScore(sResult: sResult, yResult: yResult);
 
       if (yMatchScore > bMatchScore) {
         bMatchScore = yMatchScore;
@@ -56,7 +36,7 @@ class Matcher {
         // Calculate tie-breaker score for current result.
         var yTimeDiff = (sResult.durationMs - yResult.durationMs).abs() / 15000;
         var yNameDiff = await overlapCoefficient(
-          s1: sResult.getMatchString(),
+          s1: sResult.getYouTubeMatchingString(),
           s2: yResult.getMatchString(),
           tightMatching: true,
         );
@@ -65,7 +45,7 @@ class Matcher {
         // Calculate tie-breaker score for best result.
         var bTimeDiff = (sResult.durationMs - bResult.durationMs).abs() / 15000;
         var bNameDiff = await overlapCoefficient(
-          s1: sResult.getMatchString(),
+          s1: sResult.getYouTubeMatchingString(),
           s2: bResult.getMatchString(),
           tightMatching: true,
         );
@@ -84,11 +64,11 @@ class Matcher {
     return bMatchScore > 1 ? bResult : null;
   }
 
-  /// Calculate a match score between two a [SimplifiedSongResult] and a
-  /// [SimplifiedYTEResult].
-  static Future<int> matchScore({
-    required SimplifiedSongResult sResult,
-    required SimplifiedYTEResult yResult,
+  /// Calculate a match score between two a [SResultSong] and a
+  /// [YResult].
+  static Future<int> calculateMatchScore({
+    required SResultSong sResult,
+    required YResult yResult,
   }) async {
     var score = 0;
 
@@ -100,7 +80,7 @@ class Matcher {
     }
 
     // if songs are different versions, score = 0
-    var sMatch = sResult.getMatchString().toLowerCase();
+    var sMatch = sResult.getYouTubeMatchingString().toLowerCase();
     var yMatch = yResult.getMatchString().toLowerCase();
 
     // avoid mixing up vocal and instrumental versions
