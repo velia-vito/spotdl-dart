@@ -48,34 +48,34 @@ class ID3Desktop implements ID3Interface {
 
         // album art
         if (albumArtFilePath != null) '-metadata:s:v',
-        if (albumArtFilePath != null) 'title="Album cover"',
+        if (albumArtFilePath != null) 'title=Album cover',
         if (albumArtFilePath != null) '-metadata:s:v',
-        if (albumArtFilePath != null) 'comment="Cover (front)"',
+        if (albumArtFilePath != null) 'comment=Cover (front)',
 
         // other text frames
         if (title != null) '-metadata',
-        if (title != null) 'title="$title"',
+        if (title != null) 'title=$title',
 
         if (comment != null) '-metadata',
-        if (comment != null) 'COMM="$comment"',
+        if (comment != null) 'COMM=$comment',
 
         if (songArtists != null) '-metadata',
-        if (songArtists != null) 'artist="${songArtists.join(separator)}"',
+        if (songArtists != null) 'artist=${songArtists.join(separator)}',
 
         if (albumTitle != null) '-metadata',
-        if (albumTitle != null) 'album="$albumTitle"',
+        if (albumTitle != null) 'album=$albumTitle',
 
         if (albumArtists != null) '-metadata',
-        if (albumArtists != null) 'album_artist="${albumArtists.join(separator)}"',
+        if (albumArtists != null) 'album_artist=${albumArtists.join(separator)}',
 
         if (trackNumber != null) '-metadata',
-        if (trackNumber != null) 'track="$trackNumber"',
+        if (trackNumber != null) 'track=$trackNumber',
 
         if (discNumber != null) '-metadata',
-        if (discNumber != null) 'disk="$discNumber"',
+        if (discNumber != null) 'disk=$discNumber',
 
         if (releaseYear != null) '-metadata',
-        if (releaseYear != null) 'date="$releaseYear"',
+        if (releaseYear != null) 'date=$releaseYear',
 
         // output
         _filePath,
@@ -105,9 +105,9 @@ class ID3Desktop implements ID3Interface {
         '-id3v2_version',
         '3',
         '-metadata:s:v',
-        'title="Album cover"',
+        'title=Album cover',
         '-metadata:s:v',
-        'comment="Cover (front)"',
+        'comment=Cover (front)',
         _filePath,
       ],
     );
@@ -127,7 +127,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'album_artist="${artists.join(separator)}"',
+      'album_artist=${artists.join(separator)}',
       _filePath,
     ]);
 
@@ -146,7 +146,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'date="$year"',
+      'date=$year',
       _filePath,
     ]);
 
@@ -165,7 +165,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'album="$album"',
+      'album=$album',
       _filePath,
     ]);
 
@@ -184,7 +184,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'COMM="$comment"',
+      'COMM=$comment',
       _filePath,
     ]);
 
@@ -203,7 +203,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'disk="$discNumber"',
+      'disk=$discNumber',
       _filePath,
     ]);
 
@@ -222,7 +222,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'artist="${artists.join(separator)}"',
+      'artist=${artists.join(separator)}',
       _filePath,
     ]);
 
@@ -241,7 +241,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'title="$title"',
+      'title=$title',
       _filePath,
     ]);
 
@@ -260,7 +260,7 @@ class ID3Desktop implements ID3Interface {
       '-id3v2_version',
       '3',
       '-metadata',
-      'track="$trackNumber"',
+      'track=$trackNumber',
       _filePath,
     ]);
 
