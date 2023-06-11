@@ -62,26 +62,19 @@ class MatcherDefs {
       }
     }
 
-    // if the best result has a match score of 1 or lesser it means that it's
+    // if the best result has a match score of 0.75 or lesser it means that it's
     // either a purely duration based or name based match. That's not a good
     // enough basis for surety.
-    return bMatchScore > 1 ? bResult : null;
+    return bMatchScore > 0.75 ? bResult : null;
   }
 
   /// Calculate a match score between two a [SResultSong] and a
   /// [YResult].
-  static Future<int> calculateMatchScore({
+  static Future<double> calculateMatchScore({
     required SResultSong sResult,
     required YResult yResult,
   }) async {
-    var score = 0;
-
-    // if duration is within 15s, score + 1, else exit
-    if ((sResult.durationMs - yResult.durationMs).abs() < 15000) {
-      score++;
-    } else {
-      return score; // exit.
-    }
+    var score = 0.0;
 
     // if songs are different versions, score = 0
     var sMatch = sResult.getYouTubeMatchingString().toLowerCase();
@@ -94,33 +87,51 @@ class MatcherDefs {
       'vocal',
       'cover',
       'remix',
+      'slowed',
+      'reverb',
       'version',
+      'mix',
       'audio only',
       'only audio',
     ]) {
-      if ((sMatch.contains(term) && !yMatch.contains(term)) ||
-          (yMatch.contains(term) && !sMatch.contains(term))) {
+      if ((sMatch.contains(term) ^ yMatch.contains(term))) {
         return 0;
       }
     }
 
+    // if duration is within 10s, score + 1, else exit
+    var timeDelta = (sResult.durationMs - yResult.durationMs).abs();
+    if (timeDelta < 10000) {
+      score += 1 - (timeDelta / 10000);
+    } else {
+      return 0; // exit.
+    }
+
     // if constructed titles are similar, score + 1
-    if (await overlapCoefficient(
-          s1: sMatch,
-          s2: yMatch,
-        ) >
-        0.75) {
-      score++;
+    var overlapCoeff = await overlapCoefficient(
+      s1: sMatch,
+      s2: yMatch,
+    );
+
+    var greenCardVideoAuthor = yResult.author.endsWith('- Topic') ||
+        yResult.author.endsWith('Label') ||
+        yResult.author.endsWith('Records');
+
+    if (overlapCoeff >= 0.33 || greenCardVideoAuthor) {
+      score += overlapCoeff;
+    } else {
+      return 0;
     }
 
     // if uploader and artist are similar, or it belongs to a YouTube topic
     // channel, score + 1
-    if (yResult.author.endsWith('- Topic')) {
+    if (greenCardVideoAuthor) {
       score++;
     } else {
       for (var artist in sResult.artists) {
         if (await isSimilar(s1: artist, s2: yResult.author)) {
           score++;
+
           break;
         }
       }
@@ -136,7 +147,7 @@ class MatcherDefs {
   /// of the usual 2 letter difference.
   ///
   /// ### Note
-  /// - The fancy name is [Szymkiewicz–Simpson Coefficient](https://en.wikipedia.org/wiki/Overlap_coefficient).
+  /// - The fancy name is [Tanimoto Index](https://en.wikipedia.org/wiki/Jaccard_index).
   ///
   /// - Strings are lowercased before comparison.
   ///
@@ -149,8 +160,11 @@ class MatcherDefs {
   }) async {
     // "Moe Shop - Moe Shop - Love Taste (w/ Jamie Paige & Shiki)" creates
     // "(w/" and "shiki)" as elements. Adjustments to avoid such situations.
-    s1 = s1.toLowerCase().replaceAll('(', ' ( ').replaceAll(')', ' ) ');
-    s2 = s2.toLowerCase().replaceAll('(', ' ( ').replaceAll(')', ' ) ');
+
+    for (var char in ['(', ')', '[', ']', '【', '】', '{', '}', '-', '&']) {
+      s1 = s1.replaceAll(char, '');
+      s2 = s2.replaceAll(char, '');
+    }
 
     // split the strings into words (empty and single character elements are
     // removed to eliminate things like "", "-", "&", etc.)
@@ -159,16 +173,19 @@ class MatcherDefs {
 
     // get intersection of words
     var intersection = <String>{};
+    var union = <String>{}..addAll(set1);
 
     for (var word1 in set1) {
       for (var word2 in set2) {
         if (await isSimilar(s1: word1, s2: word2, tightMatching: tightMatching)) {
           var _ = intersection.add(word1);
+        } else {
+          var _ = union.add(word2);
         }
       }
     }
 
-    var overlapScore = intersection.length / min(set1.length, set2.length);
+    var overlapScore = intersection.length / union.length;
 
     // as we ignore up to two letter differences, the intersection can be
     // greater than the smaller set which would cause errors, so in such a case
@@ -194,6 +211,7 @@ class MatcherDefs {
     }
     // if the strings are different lengths, return false
     else if (s1.length != s2.length) {
+      // print('isSimilar:\n\t$s1\n\t$s2\n\tfalse');
       return false;
     }
     // else tolerate up to 2 letter differences (usually)
@@ -205,7 +223,7 @@ class MatcherDefs {
         if (s1[i] != s2[i]) diffCount++;
         if (diffCount > (tightMatching ? 1 : 2)) return false;
       }
-
+      // print('isSimilar:\n\t$s1\n\t$s2\n\ttrue');
       return true;
     }
   }
