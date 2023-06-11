@@ -11,6 +11,10 @@ class MatcherDefs {
     required SResultSong sResult,
     required List<YResult> yResults,
   }) async {
+    if (yResults.isEmpty) {
+      throw Exception('No YouTube results provided.');
+    }
+
     var bResult = yResults.first;
     var bMatchScore = await calculateMatchScore(sResult: sResult, yResult: bResult);
 

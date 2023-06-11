@@ -58,7 +58,7 @@ class SResultSong implements SResult {
   }
 
   /// Return the string that is used when trying to find the best result.
-  String getYouTubeMatchingString() => '${artists.join(' ')} $title';
+  String getYouTubeMatchingString() => '${artists.join(', ')} - $title';
 
   /// Return the string that is used for the YouTube search query.
   String getYouTubeSearchString() => '$title by ${artists.join(', ')} from "$albumTitle"';

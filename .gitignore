@@ -10,6 +10,7 @@ pubspec.lock
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
 doc/api/
+docs/
 
 # dotenv environment variables file
 .env*
@@ -25,3 +26,7 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Downloaded mp3/temp files
+*.mp3
+*.tmp

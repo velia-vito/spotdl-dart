@@ -47,7 +47,14 @@ class YouTube {
   static Future<List<YResult>> search({required String query}) async {
     var results = await intface.search.search(query);
 
-    return results.map((searchResult) => YResult(video: searchResult)).toList();
+    if (results.isEmpty) {
+      var queryElements = query.split(' ');
+      var _ = queryElements.removeAt(Random().nextInt(queryElements.length));
+
+      return search(query: queryElements.join(' '));
+    } else {
+      return results.map((searchResult) => YResult(video: searchResult)).toList();
+    }
   }
 
   /// Finds the best match for the specified [SResultSong] on YouTube.
@@ -55,7 +62,7 @@ class YouTube {
     // Search with traditional search query.
     var bestMatch = await MatcherDefs.findBestResultAmong(
       sResult: song,
-      yResults: await YouTube.search(query: song.getYouTubeMatchingString()),
+      yResults: await YouTube.search(query: song.getYouTubeSearchString()),
     );
 
     // If no good matches are found, use alternative search query.
