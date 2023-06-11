@@ -57,8 +57,8 @@ class YouTube {
     }
   }
 
-  /// Finds the best match for the specified [SResultSong] on YouTube.
-  static Future<YResult?> getBestMatch({required SResultSong song}) async {
+  /// Finds the best match for the specified [SResultTrack] on YouTube.
+  static Future<YResult?> getBestMatch({required SResultTrack song}) async {
     // Search with traditional search query.
     var bestMatch = await MatcherDefs.findBestResultAmong(
       sResult: song,

@@ -6,9 +6,9 @@ part of '../youtube.dart';
 /// - Higher scores are better.
 class MatcherDefs {
   /// Reduce a list of [YResult]s to a single `SimplifiedYTEResult`
-  /// that best matches the provided [SResultSong].
+  /// that best matches the provided [SResultTrack].
   static Future<YResult?> findBestResultAmong({
-    required SResultSong sResult,
+    required SResultTrack sResult,
     required List<YResult> yResults,
   }) async {
     if (yResults.isEmpty) {
@@ -68,10 +68,10 @@ class MatcherDefs {
     return bMatchScore > 0.75 ? bResult : null;
   }
 
-  /// Calculate a match score between two a [SResultSong] and a
+  /// Calculate a match score between two a [SResultTrack] and a
   /// [YResult].
   static Future<double> calculateMatchScore({
-    required SResultSong sResult,
+    required SResultTrack sResult,
     required YResult yResult,
   }) async {
     var score = 0.0;

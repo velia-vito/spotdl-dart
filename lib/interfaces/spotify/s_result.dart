@@ -23,7 +23,7 @@ abstract interface class SResult {
 
 /// Type of Spotify results.
 enum SResultType {
-  /// denotes a [SResultSong]
+  /// denotes a [SResultTrack]
   song,
 
   /// denotes a [SResultPlaylist]

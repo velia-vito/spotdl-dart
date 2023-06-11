@@ -57,17 +57,17 @@ class Spotify {
   );
 
   /// Searches Spotify for songs that match the specified [query].
-  static Future<List<SResultSong>> searchForSong({
+  static Future<List<SResultTrack>> searchForTrack({
     required String query,
     int numberOfResults = 10,
   }) async {
     var results = await intface.search.get(query, types: [SearchType.track]).first(numberOfResults);
 
-    var tracks = <SResultSong>[];
+    var tracks = <SResultTrack>[];
 
     for (var page in results) {
       page.items?.forEach((track) {
-        tracks.add(SResultSong(track: track));
+        tracks.add(SResultTrack(track: track));
       });
     }
 
@@ -114,14 +114,14 @@ class Spotify {
   }
 
   /// Get all tracks from a playlist.
-  static Future<List<SResultSong>> getPlaylistTracks({required String playlistId}) async {
+  static Future<List<SResultTrack>> getPlaylistTracks({required String playlistId}) async {
     var playlistTracks = await intface.playlists.getTracksByPlaylistId(playlistId).all();
 
-    return playlistTracks.map((track) => SResultSong(track: track)).toList();
+    return playlistTracks.map((track) => SResultTrack(track: track)).toList();
   }
 
   /// Get all tracks from an album.
-  static Future<List<SResultSong>> getAlbumTracks({required String albumId}) async {
+  static Future<List<SResultTrack>> getAlbumTracks({required String albumId}) async {
     // get all tracks from the album
     var simpleAlbumTracks = await intface.albums.getTracks(albumId).all();
 
@@ -130,14 +130,14 @@ class Spotify {
       simpleAlbumTracks.map((simpleTrack) => simpleTrack.id!),
     );
 
-    return albumTracks.map((track) => SResultSong(track: track)).toList();
+    return albumTracks.map((track) => SResultTrack(track: track)).toList();
   }
 
   /// Get a song from its ID.
-  static Future<SResultSong> getSong({required String songId}) async {
-    var track = await intface.tracks.get(songId);
+  static Future<SResultTrack> getTrack({required String trackId}) async {
+    var track = await intface.tracks.get(trackId);
 
-    return SResultSong(track: track);
+    return SResultTrack(track: track);
   }
 
   /// Get an album from its ID.

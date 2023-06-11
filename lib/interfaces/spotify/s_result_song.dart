@@ -1,7 +1,7 @@
 part of '../spotify.dart';
 
 /// Class simplifying locating Spotify song details.
-class SResultSong implements SResult {
+class SResultTrack implements SResult {
   /// The full-fledged [Track] object.
   final Track track;
 
@@ -44,8 +44,8 @@ class SResultSong implements SResult {
   @override
   SResultType get type => SResultType.song;
 
-  /// Creates a new [SResultSong] from a [Track].
-  SResultSong({required this.track});
+  /// Creates a new [SResultTrack] from a [Track].
+  SResultTrack({required this.track});
 
   @override
   String toString() {
